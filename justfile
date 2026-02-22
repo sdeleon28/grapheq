@@ -1,34 +1,50 @@
 # GraphEQ build commands
 
-# Configure the build (run once or after CMakeLists.txt changes)
+# Debug (default)
 configure:
     cmake -B build
 
-# Build the plugin (configures automatically if needed)
 build:
     @if [ ! -d build ]; then just configure; fi
     cmake --build build
 
-# Clean build artifacts
-clean:
-    rm -rf build
+# Release
+configure-release:
+    cmake -B build-release -DCMAKE_BUILD_TYPE=Release
 
-# Full rebuild from scratch
-rebuild: clean configure build
+build-release:
+    @if [ ! -d build-release ]; then just configure-release; fi
+    cmake --build build-release
 
-# Run the standalone app
-run: build
-    open build/GraphEQ_artefacts/Standalone/GraphEQ.app
-
-# Install AU plugin to system plugin folder
-install-au: build
+# Deploy (no build dependency — just copies)
+deploy-au:
     mkdir -p ~/Library/Audio/Plug-Ins/Components
     cp -R build/GraphEQ_artefacts/AU/GraphEQ.component ~/Library/Audio/Plug-Ins/Components/
 
-# Install VST3 plugin to system plugin folder
-install-vst3: build
+deploy-vst3:
     mkdir -p ~/Library/Audio/Plug-Ins/VST3
     cp -R build/GraphEQ_artefacts/VST3/GraphEQ.vst3 ~/Library/Audio/Plug-Ins/VST3/
 
-# Install all plugin formats
-install: install-au install-vst3
+deploy: deploy-au deploy-vst3
+
+deploy-release-au:
+    mkdir -p ~/Library/Audio/Plug-Ins/Components
+    cp -R build-release/GraphEQ_artefacts/AU/GraphEQ.component ~/Library/Audio/Plug-Ins/Components/
+
+deploy-release-vst3:
+    mkdir -p ~/Library/Audio/Plug-Ins/VST3
+    cp -R build-release/GraphEQ_artefacts/VST3/GraphEQ.vst3 ~/Library/Audio/Plug-Ins/VST3/
+
+deploy-release: deploy-release-au deploy-release-vst3
+
+# Combined workflows
+build-and-deploy: build deploy
+rebuild: clean configure build deploy
+
+# Clean
+clean:
+    rm -rf build build-release
+
+# Run standalone
+run: build
+    open build/GraphEQ_artefacts/Standalone/GraphEQ.app
